@@ -1,48 +1,54 @@
 CREATE DATABASE TelephoneBillingSystem;
 USE TelephoneBillingSystem;
 
--- Customer Table
-CREATE TABLE Customer (
+-- Table: customer
+CREATE TABLE customer (
     customer_id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
-    address VARCHAR(255),
-    phone_number VARCHAR(15) UNIQUE,
-    email VARCHAR(100) UNIQUE
+    address VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(15) NOT NULL,
+    email VARCHAR(100),
+    plan_id INT,
+    FOREIGN KEY (plan_id) REFERENCES tariffplan(plan_id)
 );
 
--- TariffPlan Table
-CREATE TABLE TariffPlan (
+-- Table: tariffplan
+CREATE TABLE tariffplan (
     plan_id INT PRIMARY KEY AUTO_INCREMENT,
-    plan_name VARCHAR(100) NOT NULL,
+    plan_name VARCHAR(50) NOT NULL,
     local_rate DECIMAL(10, 2),
     international_rate DECIMAL(10, 2)
 );
 
--- CallLogs Table
-CREATE TABLE CallLogs (
-    call_id INT PRIMARY KEY AUTO_INCREMENT,
-    customer_id INT,
-    plan_id INT,
-    duration INT,
-    call_type VARCHAR(20),
-    FOREIGN KEY (customer_id) REFERENCES Customer(customer_id),
-    FOREIGN KEY (plan_id) REFERENCES TariffPlan(plan_id)
-);
-
--- Bill Table
-CREATE TABLE Bill (
+-- Table: bill
+CREATE TABLE bill (
     bill_id INT PRIMARY KEY AUTO_INCREMENT,
     customer_id INT,
-    total_amount DECIMAL(10, 2),
-    bill_date DATE,
-    FOREIGN KEY (customer_id) REFERENCES Customer(customer_id)
+    total_amount DECIMAL(10, 2) NOT NULL,
+    bill_date DATE NOT NULL,
+    payment_status VARCHAR(20),
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
 );
 
--- Payment Table
-CREATE TABLE Payment (
-    payment_id INT PRIMARY KEY AUTO_INCREMENT,
-    bill_id INT,
-    payment_date DATE,
-    amount DECIMAL(10, 2),
-    FOREIGN KEY (bill_id) REFERENCES Bill(bill_id)
+-- Table: calllogs
+CREATE TABLE calllogs (
+    call_id INT PRIMARY KEY AUTO_INCREMENT,
+    customer_id INT,
+    duration INT NOT NULL,
+    call_type VARCHAR(10),
+    plan_id INT,
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
+    FOREIGN KEY (plan_id) REFERENCES tariffplan(plan_id)
 );
+
+-- Table: payment
+CREATE TABLE payment (
+    payment_id INT PRIMARY KEY AUTO_INCREMENT,
+    customer_id INT,
+    bill_id INT,
+    amount DECIMAL(10, 2) NOT NULL,
+    payment_date DATETIME,
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
+    FOREIGN KEY (bill_id) REFERENCES bill(bill_id)
+);
+
