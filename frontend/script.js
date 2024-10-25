@@ -29,7 +29,6 @@ function getBills() {
         fetch(`${apiBaseURL}/bills/customer/all/${customerId}`)
             .then(response => response.json())
             .then(bills => {
-                console.log("bills",bills)
                 const billsList = document.getElementById('bills-list');
                 billsList.innerHTML = ''; // Clear previous bills
 
@@ -82,36 +81,88 @@ document.getElementById('customerForm').addEventListener('submit', function (e) 
     .catch(error => console.error('Error adding customer:', error));
 });
 
-// Function to fetch and display tariff plans
-function getTariffPlans() {
+// Function to load available tariff plans
+function loadTariffPlans() {
     fetch(`${apiBaseURL}/tariffplans`)
-        .then(response => response.json())
+        .then(response => response.json()) // Parse directly as JSON since we expect JSON response
         .then(tariffPlans => {
-            console.log("traffic plans",tariffPlans)
-            const tariffPlansList = document.getElementById('tariff-plans-list');
-            tariffPlansList.innerHTML = '';
+            const planSelect = document.getElementById('planID');
+            planSelect.innerHTML = ''; // Clear any existing options
+
+            // Populate the dropdown with tariff plan options
             tariffPlans.forEach(plan => {
-                const planCard = document.createElement('div');
-                planCard.classList.add('card', 'mb-3', 'p-3');
-                planCard.innerHTML = `
-                    <strong>Plan ID:</strong> ${plan.plan_id} <br>
-                    <strong>Name:</strong> ${plan.plan_name} <br>
-                    <strong>Rate:</strong> ${plan.monthly_rental}
-                `;
-                tariffPlansList.appendChild(planCard);
+                const option = document.createElement('option');
+                option.value = plan.plan_id;
+                option.text = `${plan.plan_name} (Local: ${plan.local_rate}/min, International: ${plan.international_rate}/min)`;
+                planSelect.appendChild(option);
             });
         })
-        .catch(error => console.error('Error fetching tariff plans:', error));
+        .catch(error => {
+            console.error('Error loading tariff plans:', error);
+            alert('Failed to load tariff plans. Please try again later.');
+        });
 }
+
+// Call this function on page load or when the relevant form is shown
+window.onload = function() {
+    loadTariffPlans();  // Automatically load plans when the page loads
+};
+
+
+// Function to add call log and generate bill
+document.getElementById('callLogForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const customerID = document.getElementById('customerID').value;
+    const planID = document.getElementById('planID').value;
+    const duration = document.getElementById('duration').value;
+    const callType = document.getElementById('callType').value;
+
+    if (!planID) {
+        alert('Please select a tariff plan.');
+        return;
+    }
+
+    const callLogData = {
+        customer_id: customerID,
+        plan_id: planID,
+        duration: duration,
+        call_type: callType
+    };
+
+    fetch(`${apiBaseURL}/add-call-log`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(callLogData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            alert(`Call log added and bill generated. Bill ID: ${data.bill_id}, Charge: ${data.charge}`);
+        }
+    })
+    .catch(error => console.error('Error adding call log:', error));
+});
 
 // Function to make a payment
 document.getElementById('paymentForm').addEventListener('submit', function (e) {
     e.preventDefault();
 
     const customer_id = document.getElementById('paymentCustomerID').value;
+    const bill_id = document.getElementById('paymentBillID').value; // Ensure bill_id is captured
     const amount = document.getElementById('paymentAmount').value;
 
-    const paymentData = { customer_id, amount };
+    // Ensure a bill is selected
+    if (!bill_id) {
+        alert("Please select a bill.");
+        return;
+    }
+
+    const paymentData = { customer_id, bill_id, amount };
 
     fetch(`${apiBaseURL}/payments`, {
         method: 'POST',
@@ -154,27 +205,51 @@ function searchCustomer() {
         .catch(error => console.error('Error searching customer:', error));
 }
 
-// Function to add a call log
-document.getElementById('callLogForm').addEventListener('submit', function (e) {
-    e.preventDefault();
+// Function to load bills for a customer
+function loadCustomerBills() {
+    const customer_id = document.getElementById('paymentCustomerID').value;
 
-    const customer_id = document.getElementById('customerID').value;
-    const call_details = document.getElementById('callDetails').value;
-    const call_date = document.getElementById('callDate').value;
+    // Check if customer_id is valid
+    if (!customer_id || isNaN(customer_id)) {
+        alert("Please enter a valid customer ID.");
+        return;
+    }
 
-    const callLogData = { customer_id, call_details, call_date };
+    fetch(`${apiBaseURL}/bills/customer/${customer_id}`)
+        .then(response => {
+            if (!response.ok) {
+                // Handle HTTP errors
+                throw new Error(`Error: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(bills => {
+            const billSelect = document.getElementById('paymentBillID');
+            billSelect.innerHTML = ''; // Clear previous options
 
-    fetch(`${apiBaseURL}/calllogs`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(callLogData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        alert('Call log added successfully!');
-        document.getElementById('callLogForm').reset(); // Reset form after submission
-    })
-    .catch(error => console.error('Error adding call log:', error));
-});
+            // Check if the response is an array before iterating
+            if (Array.isArray(bills)) {
+                if (bills.length === 0) {
+                    // No bills available for this customer
+                    billSelect.innerHTML = '<option value="">No bills available</option>';
+                } else {
+                    // Populate the dropdown with bill options
+                    bills.forEach(bill => {
+                        const option = document.createElement('option');
+                        option.value = bill.bill_id;
+                        option.textContent = `Bill ID: ${bill.bill_id}, Amount: ${bill.total_amount}, Due Date: ${bill.due_date}`;
+                        billSelect.appendChild(option);
+                    });
+                }
+            } else {
+                alert('Unexpected response format from the server.');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching bills:', error);
+            alert(`Error loading bills for the customer: ${error.message}`);
+
+            // Clear the bill dropdown on error
+            document.getElementById('paymentBillID').innerHTML = '<option value="">No bills available</option>';
+        });
+}
