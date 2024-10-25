@@ -25,7 +25,7 @@ const callLogRoutes = require('./routes/callLogRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const tariffPlanRoutes = require('./routes/tariffPlanRoutes');
 
-const billGeneration = require('./routes/billGeneration');
+
 
 
 app.use('/customers', customerRoutes);
@@ -33,7 +33,7 @@ app.use('/bills', billRoutes);
 app.use('/calllogs', callLogRoutes);
 app.use('/payments', paymentRoutes);
 app.use('/tariffplans', tariffPlanRoutes);
-app.use('/billGeneration', billGeneration); 
+
 
 
 const port = 3001;

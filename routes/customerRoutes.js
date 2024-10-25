@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-// Get all customers
+
 router.get('/', (req, res) => {
   const query = 'SELECT * FROM Customer';
   db.query(query, (err, results) => {
@@ -13,7 +13,6 @@ router.get('/', (req, res) => {
   });
 });
 
-// Add a new customer
 router.post('/', (req, res) => {
   const { name, address, phone_number, email } = req.body;
   const query = 'INSERT INTO Customer (name, address, phone_number, email) VALUES (?, ?, ?, ?)';
@@ -27,7 +26,6 @@ router.post('/', (req, res) => {
   });
 });
 
-// Search customer by name or phone number
 router.get('/search', (req, res) => {
   const queryParam = req.query.query;
   const query = `SELECT * FROM Customer WHERE name LIKE ? OR phone_number LIKE ? LIMIT 1`;
@@ -44,6 +42,5 @@ router.get('/search', (req, res) => {
     }
   });
 });
-
 
 module.exports = router;

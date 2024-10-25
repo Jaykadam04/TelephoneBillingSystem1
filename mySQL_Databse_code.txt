@@ -1,0 +1,48 @@
+CREATE DATABASE TelephoneBillingSystem;
+USE TelephoneBillingSystem;
+
+-- Customer Table
+CREATE TABLE Customer (
+    customer_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    address VARCHAR(255),
+    phone_number VARCHAR(15) UNIQUE,
+    email VARCHAR(100) UNIQUE
+);
+
+-- TariffPlan Table
+CREATE TABLE TariffPlan (
+    plan_id INT PRIMARY KEY AUTO_INCREMENT,
+    plan_name VARCHAR(100) NOT NULL,
+    local_rate DECIMAL(10, 2),
+    international_rate DECIMAL(10, 2)
+);
+
+-- CallLogs Table
+CREATE TABLE CallLogs (
+    call_id INT PRIMARY KEY AUTO_INCREMENT,
+    customer_id INT,
+    plan_id INT,
+    duration INT,
+    call_type VARCHAR(20),
+    FOREIGN KEY (customer_id) REFERENCES Customer(customer_id),
+    FOREIGN KEY (plan_id) REFERENCES TariffPlan(plan_id)
+);
+
+-- Bill Table
+CREATE TABLE Bill (
+    bill_id INT PRIMARY KEY AUTO_INCREMENT,
+    customer_id INT,
+    total_amount DECIMAL(10, 2),
+    bill_date DATE,
+    FOREIGN KEY (customer_id) REFERENCES Customer(customer_id)
+);
+
+-- Payment Table
+CREATE TABLE Payment (
+    payment_id INT PRIMARY KEY AUTO_INCREMENT,
+    bill_id INT,
+    payment_date DATE,
+    amount DECIMAL(10, 2),
+    FOREIGN KEY (bill_id) REFERENCES Bill(bill_id)
+);
