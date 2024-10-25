@@ -17,28 +17,19 @@ MySQL for database management.
 Node.js for backend server.
 Installation
 Clone the repository:
-
-bash
-Copy code
-git clone https://github.com/your-username/TelephoneBillingSystem.git
-cd TelephoneBillingSystem
+git clone https://github.com/Jaykadam04/TelephoneBillingSystem1.git
+cd TelephoneBillingSystem1
 Install dependencies:
-
-bash
-Copy code
 npm install
+
 Database Setup:
 
 Import the MySQL database schema provided in db/schema.sql.
 Update database credentials in config/db.js.
 Run the Server:
-
-bash
-Copy code
 node app.js
 Usage
 Frontend:
-
 Open index.html in a browser.
 API Endpoints:
 
